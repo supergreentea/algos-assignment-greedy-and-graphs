@@ -1,7 +1,8 @@
 /**
  * Public Transit
- * Author: Your Name and Carolyn Yao
- * Does this compile? Y/N
+ * Author: Hui Lin and Carolyn Yao
+ * Collaborators: Sang Gi Yoon and Kelvin Yui
+ * Does this compile? Y
  */
 
 /**
@@ -34,7 +35,65 @@ public class FastestRoutePublicTransit {
   ) {
     // Your code along with comments here. Feel free to borrow code from any
     // of the existing method. You can also make new helper methods.
-    return 0;
+   
+  int numVertices = lengths[0].length;
+  
+  // This is the array where we'll store all the final shortest times
+    int[] times = new int[numVertices];
+
+    // processed[i] will true if vertex i's shortest time is already finalized
+    Boolean[] processed = new Boolean[numVertices];
+
+    // Initialize all distances as INFINITE and processed[] as false
+    for (int v = 0; v < numVertices; v++) {
+      times[v] = Integer.MAX_VALUE;
+      processed[v] = false;
+    }
+
+    // Distance of source vertex from itself is always 0
+    times[S] = 0;
+    
+    // Find shortest path to all the vertices
+    for (int count = 0; count < numVertices - 1 ; count++) {
+      // Pick the minimum distance vertex from the set of vertices not yet processed.
+      // u is always equal to source in first iteration.
+      // Mark u as processed.
+      int u = findNextToProcess(times, processed);
+      processed[u] = true;
+
+      // Update time value of all the adjacent vertices of the picked vertex.
+      for (int v = 0; v < numVertices; v++) {
+        // Update time[v] only if is not processed yet, there is an edge from u to v,
+        // and total weight of path from source to v through u is smaller than current value of time[v]
+        if (!processed[v] && lengths[u][v] != 0 && times[u] != Integer.MAX_VALUE) {
+          
+          // times[u] is the current shortest time in the path to vertex v from vertex u. It can also be interpreted as
+          // the amount of time spent in commute to get to v from u. To get the time at which we arrived at vertex v,
+          // we can add times[u] to the start time.
+          int arrivalTime = times[u] + startTime;
+          
+          int waitingTime;
+          
+          // We can calculate how much time has elapsed since the last train from node v has left with
+          // the (arrivalTime - first[u][v]) % freq[u][v]. We can calculate how much time we need to wait for the next
+          // train by subtracting that from freq[u][v].
+          // If we arrive at vertex v before the first train from v departs, we can subtract arrivalTime from first[u][v] to
+          // calculate how long we have to wait before boarding the first time.
+          if (first[u][v] >= arrivalTime) waitingTime = first[u][v] - arrivalTime;
+          else {
+            if ((arrivalTime - first[u][v]) % freq[u][v] == 0) waitingTime = 0; // Takes care of an edge case.
+            else waitingTime = freq[u][v] - (arrivalTime - first[u][v]) % freq[u][v];  
+          }
+          
+          if (times[u] + lengths[u][v] + waitingTime < times[v]) {
+            times[v] = times[u] + lengths[u][v] + waitingTime;  
+          }
+        }
+      }
+      if (processed[T]) break; // The shortest path to vertex T has been found, so we can stop.
+    }
+    
+    return times[T];  // Times T stores the final shortest time from vertex S to vertex T.
   }
 
   /**
@@ -125,5 +184,31 @@ public class FastestRoutePublicTransit {
     t.shortestTime(lengthTimeGraph, 0);
 
     // You can create a test case for your implemented method for extra credit below
+    
+    // Edge weight data.
+    int test[][] = new int[][] {
+      {0, 5, 7, 0},
+      {5, 0, 0, 4},
+      {7, 0, 0, 3},
+      {0, 4, 3, 0}
+    };
+    
+    // First time each train leaves from u to v.
+    int first[][] = new int[][] {
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0}
+    };
+    
+    // Frequency of trains from u to v.
+    int freq[][] = new int[][] {
+      {0, 4, 3, 0},
+      {4, 0, 0, 7},
+      {3, 0, 0, 7},
+      {0, 7, 7, 0}
+    };
+    
+    System.out.println("Shortest time for test travel data is: " + t.myShortestTravelTime(0, 3, 1, test, first, freq));
   }
 }

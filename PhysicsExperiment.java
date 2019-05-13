@@ -1,7 +1,8 @@
 /**
  * Physics Experiment
- * Author: Your Name and Carolyn Yao
- * Does this compile or finish running within 5 seconds? Y/N
+ * Author: Hui Lin and Carolyn Yao
+ * Collaborators: Sang Gi Yoon and Kelvin Yui
+ * Does this compile or finish running within 5 seconds? Y
  */
 
 /**
@@ -38,8 +39,96 @@ public class PhysicsExperiment {
     int[][] scheduleTable = new int[numStudents + 1][numSteps + 1];
 
     // Your code goes here
-
+    
+    // When number of jobs scheduled hits numSteps, when are done.
+    // Jobs and steps are used interchangeably.
+    int numJobsScheduled = 0;
+    
+    // Chosen student is student with longest consecutive streak of steps from a given starting step.
+    int chosenStudent = 1;
+    
+    // Farthest step along consecutive streak.
+    int furthest = 0;
+    
+    for (int studentId = 1; studentId <= numStudents; studentId++) {
+      // Takes care of the first step.
+    int currentFurthest = getFurthestStreak(1, studentId, scheduleTable, signUpTable, numStudents, numSteps);
+    if (currentFurthest > furthest) {
+      furthest = currentFurthest;
+      chosenStudent = studentId;
+    }
+    }
+    
+    // Mark scheduleTable with step assignments.
+  for (int jobId = 1; jobId <= furthest; jobId++) {
+    scheduleTable[chosenStudent][jobId] = 1;
+    numJobsScheduled++;
+  }
+    
+  
+  // Keep applying algorithm until we have assigned all the steps to students.
+    while (numJobsScheduled < numSteps) {
+      // Find the minimal index step not already scheduled.
+      int earliestJobNotTaken = getEarliestJobNotScheduled(scheduleTable, numStudents, numSteps);
+      
+      // A variable to help us determine longest consecutive streak.
+      int furthestStep = earliestJobNotTaken;
+      
+      // Finds student with would have the longest consecutive streak (by checking result of getFurthestStreak function).
+      // Then schedules that student with the jobs in that streak.
+      for (int studentId = 1; studentId <= numStudents; studentId++) {
+        int currentFurthest = getFurthestStreak(earliestJobNotTaken, studentId, scheduleTable, signUpTable, numStudents, numSteps);
+        if (currentFurthest > furthestStep) {
+          furthestStep = currentFurthest;
+          chosenStudent = studentId;
+        }
+      }
+      
+      // Mark jobs in scheduleTable.
+      for (int jobId = earliestJobNotTaken; jobId <= furthestStep; jobId++) {
+        scheduleTable[chosenStudent][jobId] = 1;
+        numJobsScheduled++;
+      }
+    }
+    
     return scheduleTable;
+  }
+  
+  public void printJobsScheduled(int[][] scheduleTable, int numStudents, int numSteps) {
+    for (int i = 1; i <= numSteps; i++) {
+      if (isJobScheduled(scheduleTable, i, numStudents, numSteps)) {
+        System.out.print(i + "\t");
+      }
+    }
+    System.out.println();
+  }
+  
+  // Get last step in longest consecutive streak from given starting step.
+  public int getFurthestStreak(int startStep, int student, int[][] scheduleTable, int[][] signUpTable, int numStudents, int numSteps) {
+    int lastStep = startStep;
+    if (signUpTable[student][startStep] == 1) {
+      while (lastStep <= numSteps && signUpTable[student][lastStep] == 1) {
+        lastStep++;
+      }
+      return lastStep - 1;
+    }
+    return -1;
+  }
+  
+  // Finds the earliest step not already scheduled to student.
+  public int getEarliestJobNotScheduled(int[][] scheduleTable, int numStudents, int numSteps) {
+    for (int jobId = 1; jobId <= numSteps; jobId++) {
+      if (!isJobScheduled(scheduleTable, jobId, numStudents, numSteps)) return jobId;
+    }
+  return -1;
+  }
+  
+  // Loops through column of schedule table to check if job has been scheduled to student.
+  public boolean isJobScheduled(int[][] scheduleTable, int jobId, int numStudents, int numSteps) {  
+    for (int studentId = 1; studentId <= numStudents; studentId++) {
+      if (scheduleTable[studentId][jobId] == 1) return true;
+    }
+    return false;
   }
 
   /**
